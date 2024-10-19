@@ -6,20 +6,51 @@ import {
   KeyboardAvoidingView,
   TextInput,
   Pressable,
+  Alert,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from 'axios';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation()
+  useEffect(() => {
+    const checkLoginStatus = async () =>{
+      try {
+        const token = await AsyncStorage.getItem("authToken")
+        if(token) {
+          navigation.replace("Main")
+        }
+      } catch (error) {
+        console.log("error message",err)
+      }
+    }
+    checkLoginStatus()
+  },[])
+  const handleLogin = () => {
+    const user = {
+      email:email,
+      password: password
+    }
+    axios.post("http://192.168.136.140:8000/login",user).then((response)=>{
+      console.log(response)
+      const token = response.data.token;
+      AsyncStorage.setItem("authToken",token)
+      navigation.replace("Main")
+    }).catch((error) => {
+      Alert.alert("Login Error","Invalid Email")
+      console.log(error)
+    })
+  }
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "white", alignItems: "center", paddingTop:80}}
+      style={{ flex: 1, backgroundColor: "white", alignItems: "center",justifyContent:"center"}}
     >
       <View>
         <Image
@@ -108,7 +139,7 @@ const LoginScreen = () => {
         </View>
         <View style={{marginTop:80}}/>
 
-        <Pressable style={{width:200, backgroundColor:"#FEBE10",borderRadius:6,marginLeft:"auto",marginRight:"auto",padding:15}}>
+        <Pressable onPress={handleLogin} style={{width:200, backgroundColor:"#FEBE10",borderRadius:6,marginLeft:"auto",marginRight:"auto",padding:15}}>
           <Text style={{textAlign:"center",color:'white',fontSize:16,fontWeight:'bold'}}> Login</Text> 
         </Pressable>
         <Pressable 
